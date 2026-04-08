@@ -1,0 +1,14 @@
+{
+  "overall_score": 92.2,
+  "overall_grade": "A",
+  "category_scores": {
+    "1. Fraud Detection & Monitoring": 94.5,
+    "2. Chargeback & Dispute Resolution": 94.0,
+    "3. Data Governance & Quality": 97.0,
+    "4. Model Risk Management": 90.5,
+    "5. Regulatory Reporting & Documentation": 85.0
+  },
+  "total_checks": 20,
+  "checks_passed": 17,
+  "assessment_date": "2026-03-07"
+}

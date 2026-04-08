@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Fraud Detection Dashboard</h1><span class="badge badge-success">System Online</span></div>
+<div class="stats-grid">
+  <div class="stat-card blue animate-in"><div class="stat-icon">&#129302;</div><div class="stat-value">{{ stats.models_loaded }}</div><div class="stat-label">ML Models Active</div></div>
+  <div class="stat-card green animate-in"><div class="stat-icon">&#9989;</div><div class="stat-value">{{ stats.total_predictions }}</div><div class="stat-label">Total Predictions</div></div>
+  <div class="stat-card red animate-in"><div class="stat-icon">&#128680;</div><div class="stat-value">{{ stats.frauds_detected }}</div><div class="stat-label">Frauds Detected</div></div>
+  <div class="stat-card orange animate-in"><div class="stat-icon">&#128200;</div><div class="stat-value">{{ stats.accuracy }}%</div><div class="stat-label">Model Accuracy</div></div>
+</div>
+<div class="grid-2">
+  <div class="card animate-in"><div class="card-header"><h3>Model Performance</h3></div>
+    <table class="table-dark"><tr><th>Model</th><th>AUC</th><th>Recall</th><th>Status</th></tr>
+    {% for model in model_info %}<tr><td>{{ model.name }}</td><td>{{ model.auc }}</td><td>{{ model.recall }}</td><td><span class="badge badge-success">Active</span></td></tr>{% endfor %}</table></div>
+  <div class="card animate-in"><div class="card-header"><h3>RBI Compliance</h3></div>
+    <div class="gauge-container"><div class="gauge-value" style="color:#2ecc71;">{{ compliance.score }}</div>
+    <div class="gauge-label">Compliance Score (Grade {{ compliance.grade }})</div></div>
+    <div style="padding:0 20px;">{% for cat, score in compliance.categories.items() %}<div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;"><span>{{ cat }}</span><span>{{ score }}%</span></div>
+      <div class="progress-bar"><div class="fill {% if score >= 90 %}green{% elif score >= 80 %}blue{% else %}orange{% endif %}" style="width:{{ score }}%"></div></div>
+    </div>{% endfor %}</div></div>
+</div>
+<div class="card animate-in"><div class="card-header"><h3>Recent Alerts</h3><a href="/alerts" class="btn btn-info" style="padding:8px 15px;font-size:12px;">View All</a></div>
+  {% if recent_alerts %}{% for alert in recent_alerts[:5] %}<div class="alert-item {{ alert.level }}">
+    <div class="alert-icon">{% if alert.level == "critical" %}&#128308;{% elif alert.level == "warning" %}&#128993;{% else %}&#128994;{% endif %}</div>
+    <div class="alert-details"><strong>{{ alert.amount }}</strong> - {{ alert.type }}<br><small>Risk: {{ alert.risk }}% | {{ alert.reason }}</small></div>
+    <div class="alert-time">{{ alert.time }}</div></div>{% endfor %}
+  {% else %}<p style="text-align:center;color:var(--text-secondary);padding:20px;">No alerts yet. Start predicting transactions!</p>{% endif %}</div>
+<div class="card animate-in"><div class="card-header"><h3>NPCI UPI Insights (Real Data)</h3></div>
+  <div class="stats-grid" style="margin-bottom:0;">
+    <div style="text-align:center;padding:15px;"><div style="font-size:24px;font-weight:700;color:#3498db;">130.2B</div><div style="font-size:12px;color:var(--text-secondary);">UPI Transactions</div></div>
+    <div style="text-align:center;padding:15px;"><div style="font-size:24px;font-weight:700;color:#e74c3c;">1,059,080</div><div style="font-size:12px;color:var(--text-secondary);">Chargebacks</div></div>
+    <div style="text-align:center;padding:15px;"><div style="font-size:24px;font-weight:700;color:#f39c12;">801</div><div style="font-size:12px;color:var(--text-secondary);">Banks Profiled</div></div>
+    <div style="text-align:center;padding:15px;"><div style="font-size:24px;font-weight:700;color:#2ecc71;">0.000814%</div><div style="font-size:12px;color:var(--text-secondary);">CB Rate</div></div>
+  </div></div>
+{% endblock %}

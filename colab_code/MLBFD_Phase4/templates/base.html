@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLBFD - {% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="theme-color" content="#1a1a2e">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <h2>MLBFD</h2>
+            <small>ML Fraud Detection System</small>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="/" class="{% if active == 'dashboard' %}active{% endif %}">
+                <span class="icon">&#128202;</span> <span>Dashboard</span></a></li>
+            <li><a href="/predict" class="{% if active == 'predict' %}active{% endif %}">
+                <span class="icon">&#128269;</span> <span>Predict Fraud</span></a></li>
+            <li><a href="/alerts" class="{% if active == 'alerts' %}active{% endif %}">
+                <span class="icon">&#128680;</span> <span>Alerts</span></a></li>
+            <li><a href="/network" class="{% if active == 'network' %}active{% endif %}">
+                <span class="icon">&#128376;</span> <span>Fraud Network</span></a></li>
+            <li><a href="/profile" class="{% if active == 'profile' %}active{% endif %}">
+                <span class="icon">&#128100;</span> <span>User Profiles</span></a></li>
+            <li><a href="/explainability" class="{% if active == 'explainability' %}active{% endif %}">
+                <span class="icon">&#129504;</span> <span>Explainable AI</span></a></li>
+            <li><a href="/heatmap" class="{% if active == 'heatmap' %}active{% endif %}">
+                <span class="icon">&#128506;</span> <span>Risk Heatmap</span></a></li>
+            <li><a href="/drift" class="{% if active == 'drift' %}active{% endif %}">
+                <span class="icon">&#128201;</span> <span>Model Health</span></a></li>
+            <li><a href="/npci" class="{% if active == 'npci' %}active{% endif %}">
+                <span class="icon">&#127963;</span> <span>NPCI/RBI Data</span></a></li>
+            <li><a href="/reports" class="{% if active == 'reports' %}active{% endif %}">
+                <span class="icon">&#128196;</span> <span>Reports</span></a></li>
+            <li><a href="/settings" class="{% if active == 'settings' %}active{% endif %}">
+                <span class="icon">&#9881;</span> <span>Settings</span></a></li>
+        </ul>
+    </nav>
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

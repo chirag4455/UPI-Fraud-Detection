@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# secrets
+.env
+*token*
+*apikey*
+*api_key*
+*secret*
+*password*
+
+# big files (recommended to keep out)
+*.zip
+*.7z
+
+# optional: if you don't want to push datasets
+data/
+*.csv
+*.parquet

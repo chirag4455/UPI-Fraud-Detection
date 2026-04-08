@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Predict Fraud{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Predict Transaction Fraud</h1><span class="badge badge-info">6 Models Active</span></div>
+{% if result %}
+<div class="result-box {{ result.class }} animate-in pulse">
+  <div class="result-icon">{{ result.icon }}</div>
+  <div class="result-text">{{ result.verdict }}</div>
+  <div class="result-score" style="color:{{ result.color }};">{{ result.risk_score }}%</div>
+  <div style="color:var(--text-secondary);margin-top:10px;">Risk Score</div></div>
+<div class="card animate-in"><div class="card-header"><h3>Model Votes</h3></div><div class="grid-3">
+  {% for model_name, vote in result.model_votes.items() %}
+  <div style="text-align:center;padding:15px;border-radius:10px;background:rgba({% if vote == 'FRAUD' %}231,76,60{% else %}46,204,113{% endif %},0.1);">
+    <div style="font-size:12px;color:var(--text-secondary);">{{ model_name }}</div>
+    <div style="font-size:18px;font-weight:700;color:{% if vote == 'FRAUD' %}#e74c3c{% else %}#2ecc71{% endif %};">{{ vote }}</div></div>
+  {% endfor %}</div></div>
+{% if result.shap_reasons %}<div class="card animate-in"><div class="card-header"><h3>Why This Decision? (Top Factors)</h3></div>
+  {% for reason in result.shap_reasons %}<div class="shap-bar">
+    <div class="feature-name">{{ reason.feature }}</div>
+    <div class="bar-container"><div class="bar-fill {{ 'positive' if reason.impact > 0 else 'negative' }}" style="width:{{ reason.width }}%;"></div></div>
+    <span style="font-size:11px;margin-left:10px;color:{{ '#e74c3c' if reason.impact > 0 else '#3498db' }};">{{ "%+.3f"|format(reason.impact) }}</span>
+  </div>{% endfor %}
+  <div style="margin-top:15px;padding:15px;background:rgba(255,255,255,0.03);border-radius:10px;"><strong>Plain English:</strong> {{ result.explanation }}</div></div>{% endif %}
+<div class="card animate-in"><div class="card-header"><h3>Was This Correct? (Online Learning)</h3></div>
+  <div style="display:flex;gap:15px;justify-content:center;">
+    <form action="/feedback" method="POST" style="display:inline;"><input type="hidden" name="txn_id" value="{{ result.txn_id }}"><input type="hidden" name="prediction" value="{{ result.prediction }}"><input type="hidden" name="feedback" value="correct"><button type="submit" class="btn btn-success">Yes, Correct</button></form>
+    <form action="/feedback" method="POST" style="display:inline;"><input type="hidden" name="txn_id" value="{{ result.txn_id }}"><input type="hidden" name="prediction" value="{{ result.prediction }}"><input type="hidden" name="feedback" value="incorrect"><button type="submit" class="btn btn-danger">No, Wrong</button></form>
+  </div></div>
+{% endif %}
+<div class="card animate-in"><div class="card-header"><h3>Enter Transaction Details</h3></div>
+  <form action="/predict" method="POST"><div class="grid-3">
+    <div class="form-group"><label>Amount (INR)</label><input type="number" name="amount" class="form-control" placeholder="e.g., 5000" step="0.01" required value="{{ request.form.get('amount', '') }}"></div>
+    <div class="form-group"><label>Hour of Day (0-23)</label><input type="number" name="hour" class="form-control" placeholder="e.g., 14" min="0" max="23" required value="{{ request.form.get('hour', '') }}"></div>
+    <div class="form-group"><label>Transaction Type</label><select name="txn_type" class="form-control" required><option value="TRANSFER">Transfer</option><option value="CASH_OUT">Cash Out</option><option value="PAYMENT">Payment</option><option value="DEBIT">Debit</option><option value="CASH_IN">Cash In</option></select></div>
+    <div class="form-group"><label>Balance Before (INR)</label><input type="number" name="balance_before" class="form-control" placeholder="e.g., 50000" step="0.01" required value="{{ request.form.get('balance_before', '') }}"></div>
+    <div class="form-group"><label>Balance After (INR)</label><input type="number" name="balance_after" class="form-control" placeholder="e.g., 45000" step="0.01" required value="{{ request.form.get('balance_after', '') }}"></div>
+    <div class="form-group"><label>Payment App</label><select name="payment_app" class="form-control"><option value="PhonePe">PhonePe</option><option value="GPay">Google Pay</option><option value="Paytm">Paytm</option><option value="BHIM">BHIM</option><option value="Other">Other</option></select></div>
+    <div class="form-group"><label>Location</label><select name="state" class="form-control"><option value="Maharashtra">Maharashtra</option><option value="Karnataka">Karnataka</option><option value="Delhi">Delhi</option><option value="Tamil Nadu">Tamil Nadu</option><option value="Gujarat">Gujarat</option><option value="UP">Uttar Pradesh</option><option value="Other">Other</option></select></div>
+    <div class="form-group"><label>New Payee?</label><select name="is_new_payee" class="form-control"><option value="0">No (Known)</option><option value="1">Yes (New)</option></select></div>
+    <div class="form-group"><label>Known Device?</label><select name="is_known_device" class="form-control"><option value="1">Yes (Known)</option><option value="0">No (New Device)</option></select></div>
+  </div><div style="text-align:center;margin-top:20px;"><button type="submit" class="btn btn-primary btn-lg">Analyze Transaction</button></div></form></div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}NPCI/RBI Data{% endblock %}
+{% block content %}
+<div class="topbar"><h1>NPCI/RBI Integration</h1><span class="badge badge-info">Real Data</span></div>
+<div class="stats-grid"><div class="stat-card blue"><div class="stat-value">130.2B</div><div class="stat-label">UPI Transactions</div></div><div class="stat-card red"><div class="stat-value">1.06M</div><div class="stat-label">Chargebacks</div></div><div class="stat-card orange"><div class="stat-value">801</div><div class="stat-label">Banks Profiled</div></div><div class="stat-card green"><div class="stat-value">{{ compliance_score }}</div><div class="stat-label">RBI Score</div></div></div>
+<div class="card"><div class="card-header"><h3>Monthly Chargeback Trends</h3></div><table class="table-dark"><tr><th>Month</th><th>Transactions</th><th>Chargebacks</th><th>Accepted</th><th>CB Rate</th></tr>{% for row in monthly_data %}<tr><td>{{ row.month }}</td><td>{{ row.txns }}</td><td>{{ row.chargebacks }}</td><td>{{ row.accepted }}</td><td>{{ row.rate }}</td></tr>{% endfor %}</table></div>
+<div class="card"><div class="card-header"><h3>Top 10 Banks by CB Rate</h3></div><table class="table-dark"><tr><th>Code</th><th>Bank</th><th>CBs</th><th>Rate</th><th>Risk</th></tr>{% for b in top_banks %}<tr><td>{{ b.code }}</td><td>{{ b.name }}</td><td>{{ b.chargebacks }}</td><td>{{ b.rate }}</td><td><span class="badge {{ 'badge-danger' if b.risk == 'HIGH' else 'badge-warning' if b.risk == 'MEDIUM' else 'badge-success' }}">{{ b.risk }}</span></td></tr>{% endfor %}</table></div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Alerts{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Real-Time Alert System</h1><div>
+  <span class="badge badge-danger">{{ alert_counts.critical }} Critical</span>
+  <span class="badge badge-warning">{{ alert_counts.warning }} Warning</span>
+  <span class="badge badge-success">{{ alert_counts.safe }} Safe</span></div></div>
+<div class="stats-grid">
+  <div class="stat-card red"><div class="stat-icon">&#128308;</div><div class="stat-value">{{ alert_counts.critical }}</div><div class="stat-label">Critical (Risk > 80%)</div></div>
+  <div class="stat-card orange"><div class="stat-icon">&#128993;</div><div class="stat-value">{{ alert_counts.warning }}</div><div class="stat-label">Warning (50-80%)</div></div>
+  <div class="stat-card green"><div class="stat-icon">&#128994;</div><div class="stat-value">{{ alert_counts.safe }}</div><div class="stat-label">Safe (< 50%)</div></div>
+  <div class="stat-card blue"><div class="stat-icon">&#128202;</div><div class="stat-value">{{ alert_counts.total }}</div><div class="stat-label">Total Analyzed</div></div></div>
+<div class="card"><div class="card-header"><h3>Alert History</h3>
+  <form action="/clear_alerts" method="POST" style="display:inline;"><button type="submit" class="btn btn-danger" style="padding:8px 15px;font-size:12px;">Clear All</button></form></div>
+  {% if alerts %}{% for alert in alerts %}<div class="alert-item {{ alert.level }}">
+    <div class="alert-icon">{% if alert.level == "critical" %}&#128308;{% elif alert.level == "warning" %}&#128993;{% else %}&#128994;{% endif %}</div>
+    <div class="alert-details"><strong>INR {{ alert.amount }}</strong> - {{ alert.type }} | Risk: {{ alert.risk }}%<br><small>{{ alert.reason }}</small></div>
+    <div class="alert-time">{{ alert.time }}</div></div>{% endfor %}
+  {% else %}<p style="text-align:center;color:var(--text-secondary);padding:30px;">No alerts yet.</p>{% endif %}</div>
+{% endblock %}

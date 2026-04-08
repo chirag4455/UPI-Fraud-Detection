@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}User Profiles{% endblock %}
+{% block content %}
+<div class="topbar"><h1>User Behavior Profiling</h1><span class="badge badge-info">Anomaly Detection</span></div>
+<div class="card"><div class="card-header"><h3>Search User Profile</h3></div><form action="/profile" method="POST" style="display:flex;gap:15px;"><input type="text" name="user_id" class="form-control" placeholder="Enter User/Account ID" value="{{ user_id or '' }}" style="flex:1;"><button type="submit" class="btn btn-primary">Analyze</button></form></div>
+{% if profile %}<div class="grid-2"><div class="card animate-in"><div class="card-header"><h3>Normal Behavior</h3></div><table class="table-dark"><tr><td>Avg Amount</td><td><strong>INR {{ profile.avg_amount }}</strong></td></tr><tr><td>Usual Hours</td><td><strong>{{ profile.usual_hours }}</strong></td></tr><tr><td>Frequent Type</td><td><strong>{{ profile.frequent_type }}</strong></td></tr><tr><td>Total Txns</td><td><strong>{{ profile.total_txns }}</strong></td></tr><tr><td>Fraud History</td><td><strong>{{ profile.fraud_count }} cases</strong></td></tr></table></div>
+<div class="card animate-in"><div class="card-header"><h3>Anomaly Score</h3></div><div class="gauge-container"><div class="gauge-value" style="color:{{ '#e74c3c' if profile.anomaly_score > 70 else '#f39c12' if profile.anomaly_score > 40 else '#2ecc71' }};">{{ profile.anomaly_score }}</div><div class="gauge-label">Anomaly Score (0-100)</div></div>
+{% if profile.anomalies %}<div style="padding:0 20px;">{% for a in profile.anomalies %}<div class="alert-item warning" style="margin-bottom:8px;"><div class="alert-icon">&#9888;</div><div class="alert-details"><small>{{ a }}</small></div></div>{% endfor %}</div>{% endif %}</div></div>{% endif %}
+{% endblock %}

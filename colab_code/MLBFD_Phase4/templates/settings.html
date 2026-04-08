@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="topbar">
+    <h1>Settings</h1>
+</div>
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header"><h3>Alert Settings</h3></div>
+        <form action="/update_settings" method="POST">
+            <div class="form-group">
+                <label>Alert Language</label>
+                <select name="language" class="form-control">
+                    <option value="english" {{ 'selected' if settings.language == 'english' else '' }}>English</option>
+                    <option value="hindi" {{ 'selected' if settings.language == 'hindi' else '' }}>Hindi</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Critical Alert Threshold (%)</label>
+                <input type="number" name="critical_threshold" class="form-control"
+                       value="{{ settings.critical_threshold }}" min="50" max="100">
+            </div>
+            <div class="form-group">
+                <label>Warning Alert Threshold (%)</label>
+                <input type="number" name="warning_threshold" class="form-control"
+                       value="{{ settings.warning_threshold }}" min="20" max="80">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Settings</button>
+        </form>
+    </div>
+    <div class="card">
+        <div class="card-header"><h3>Model Settings</h3></div>
+        <table class="table-dark">
+            <tr><td>Primary Model</td><td><strong>XGBoost</strong></td></tr>
+            <tr><td>Ensemble Voting</td><td><strong>Enabled (6 models)</strong></td></tr>
+            <tr><td>Auto-Retrain</td><td><strong>Every 50 feedbacks</strong></td></tr>
+            <tr><td>SHAP Explanations</td><td><strong>Enabled</strong></td></tr>
+            <tr><td>Features Used</td><td><strong>108</strong></td></tr>
+        </table>
+        <div style="margin-top:15px;">
+            <div class="card-header"><h3>SMS Alert Preview</h3></div>
+            <div style="padding:15px; background:rgba(255,255,255,0.03); border-radius:10px; margin-bottom:10px;">
+                <small style="color:var(--text-secondary);">English:</small><br>
+                <span>Alert: Suspicious transaction of INR 45,000 detected on your account at 3:14 AM. Was this you? Reply YES/NO</span>
+            </div>
+            <div style="padding:15px; background:rgba(255,255,255,0.03); border-radius:10px;">
+                <small style="color:var(--text-secondary);">Hindi:</small><br>
+                <span>Chetavani: Aapke khate par INR 45,000 ka sandigdh len-den 3:14 AM par paya gaya. Kya yeh aapne kiya? YES/NO jawab dein</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

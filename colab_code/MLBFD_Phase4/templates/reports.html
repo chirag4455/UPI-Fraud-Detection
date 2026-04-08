@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Report Generator</h1><span class="badge badge-info">PDF Export</span></div>
+<div class="grid-3">
+<div class="card" style="text-align:center;"><div style="font-size:50px;margin-bottom:15px;">&#128202;</div><h3>Transaction Report</h3><p style="color:var(--text-secondary);font-size:13px;margin:15px 0;">Summary of all analyzed transactions.</p><form action="/generate_report" method="POST"><input type="hidden" name="report_type" value="transaction"><button type="submit" class="btn btn-primary">Generate PDF</button></form></div>
+<div class="card" style="text-align:center;"><div style="font-size:50px;margin-bottom:15px;">&#127963;</div><h3>NPCI/RBI Report</h3><p style="color:var(--text-secondary);font-size:13px;margin:15px 0;">NPCI chargeback + RBI compliance.</p><form action="/generate_report" method="POST"><input type="hidden" name="report_type" value="npci"><button type="submit" class="btn btn-info">Generate PDF</button></form></div>
+<div class="card" style="text-align:center;"><div style="font-size:50px;margin-bottom:15px;">&#129302;</div><h3>Model Performance</h3><p style="color:var(--text-secondary);font-size:13px;margin:15px 0;">Model comparison and metrics.</p><form action="/generate_report" method="POST"><input type="hidden" name="report_type" value="model"><button type="submit" class="btn btn-success">Generate PDF</button></form></div>
+</div>
+{% if generated_report %}<div class="card animate-in" style="text-align:center;"><h3>Report Generated!</h3><p style="color:var(--text-secondary);margin:10px 0;">{{ generated_report }}</p></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Risk Heatmap{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Transaction Risk Heatmap</h1><span class="badge badge-warning">Risk Analysis</span></div>
+<div class="grid-2"><div class="card"><div class="card-header"><h3>Fraud Risk by Hour</h3></div><div style="padding:10px;">
+{% for hd in hourly_risk %}<div style="display:flex;align-items:center;margin-bottom:4px;"><span style="width:50px;font-size:11px;text-align:right;padding-right:10px;">{{ hd.hour }}:00</span><div style="flex:1;height:18px;background:rgba(255,255,255,0.05);border-radius:3px;"><div style="height:100%;width:{{ hd.risk }}%;background:{% if hd.risk > 70 %}#e74c3c{% elif hd.risk > 40 %}#f39c12{% else %}#2ecc71{% endif %};border-radius:3px;"></div></div><span style="width:40px;font-size:11px;text-align:right;">{{ hd.risk }}%</span></div>{% endfor %}</div></div>
+<div class="card"><div class="card-header"><h3>Fraud Risk by Type</h3></div>
+{% for td in type_risk %}<div style="display:flex;align-items:center;margin-bottom:15px;padding:10px;background:rgba(255,255,255,0.03);border-radius:10px;"><div style="width:120px;font-weight:600;">{{ td.type }}</div><div style="flex:1;"><div class="progress-bar" style="height:12px;"><div class="fill {% if td.risk > 70 %}red{% elif td.risk > 40 %}orange{% else %}green{% endif %}" style="width:{{ td.risk }}%;"></div></div></div><span style="width:60px;text-align:right;font-weight:600;color:{% if td.risk > 70 %}#e74c3c{% elif td.risk > 40 %}#f39c12{% else %}#2ecc71{% endif %};">{{ td.risk }}%</span></div>{% endfor %}</div></div>
+{% endblock %}

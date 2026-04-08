@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Fraud Network{% endblock %}
+{% block content %}
+<div class="topbar"><h1>Fraud Network Analysis</h1><span class="badge badge-info">Graph Analytics</span></div>
+<div class="stats-grid"><div class="stat-card blue"><div class="stat-value">{{ network.nodes }}</div><div class="stat-label">Accounts</div></div><div class="stat-card orange"><div class="stat-value">{{ network.edges }}</div><div class="stat-label">Connections</div></div><div class="stat-card red"><div class="stat-value">{{ network.rings }}</div><div class="stat-label">Fraud Rings</div></div><div class="stat-card green"><div class="stat-value">{{ network.mules }}</div><div class="stat-label">Mule Accounts</div></div></div>
+<div class="card"><div class="card-header"><h3>Network Visualization</h3></div><div class="network-container"><div style="text-align:center;"><div style="font-size:60px;">&#128376;</div><h3 style="margin-top:15px;">Fraud Network Graph</h3><p style="color:var(--text-secondary);">Predict transactions to build the network.</p></div></div></div>
+{% endblock %}
