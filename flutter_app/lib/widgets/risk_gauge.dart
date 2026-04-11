@@ -71,9 +71,6 @@ class _RiskGaugeState extends State<RiskGauge>
   }
 
   Color _colorForScore(double score) {
-    if (score < AppConstants.colorSafe.value) {
-      return AppConstants.colorSafe;
-    }
     if (score < 30) return AppConstants.colorSafe;
     if (score < 60) return AppConstants.colorSuspicious;
     return AppConstants.colorFraud;
