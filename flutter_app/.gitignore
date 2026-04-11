@@ -1,0 +1,39 @@
+# Flutter/Dart build artifacts
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Android build artifacts
+android/.gradle/
+android/app/build/
+android/captures/
+android/local.properties
+android/key.properties
+android/*.jks
+
+# iOS build artifacts
+ios/.symlinks/
+ios/Pods/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/.generated/
+ios/Runner/Assets.xcassets/AppIcon.appiconset/Contents.json
+ios/Runner.xcworkspace/
+
+# Coverage
+coverage/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.DS_Store
+
+# Test results
+test-results/

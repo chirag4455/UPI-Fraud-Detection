@@ -1,0 +1,89 @@
+name: upi_fraud_detection
+description: A Flutter mobile application for real-time UPI fraud detection with QR code scanning, live predictions, and user dashboard.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP client
+  dio: ^5.3.2
+
+  # State management
+  provider: ^6.1.1
+
+  # QR code scanning
+  mobile_scanner: ^3.5.5
+
+  # Local SQLite database
+  sqflite: ^2.3.0
+  path: ^1.9.0
+
+  # Shared preferences for settings
+  shared_preferences: ^2.2.2
+
+  # Internationalization
+  intl: ^0.19.0
+
+  # JSON serialization
+  json_annotation: ^4.8.1
+
+  # UI utilities
+  flutter_svg: ^2.0.9
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  fl_chart: ^0.66.2
+  lottie: ^3.0.0
+
+  # Crypto / security
+  crypto: ^3.0.3
+  flutter_secure_storage: ^9.0.0
+
+  # CSV export
+  csv: ^6.0.0
+
+  # Connectivity
+  connectivity_plus: ^5.0.2
+
+  # Permissions
+  permission_handler: ^11.1.0
+
+  # UUID generation
+  uuid: ^4.3.3
+
+  # Date utilities
+  timeago: ^3.6.1
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/animations/
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
