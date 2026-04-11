@@ -1,8 +1,8 @@
-# Model Artefact Registry — MLBFD Phase 11
+# Model Artifact Registry — MLBFD Phase 11
 
 > **Multi-Layer Behavioral Fraud Detection System**
 > Version history, file manifest, and integration notes for all
-> serialised model artefacts stored in this directory.
+> serialized model artifacts stored in this directory.
 
 ---
 
@@ -227,7 +227,7 @@ python test_predictor_integration.py       # built-in runner
 python -m pytest test_predictor_integration.py -v   # pytest
 ```
 
-25 tests covering model artefact loading, feature construction,
+25 tests covering model artifact loading, feature construction,
 ensemble inference, risk aggregation, and Phase 11 performance targets.
 
 ---

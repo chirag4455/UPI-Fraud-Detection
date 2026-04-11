@@ -220,9 +220,9 @@ Based on gain importance from the Phase 11 XGBoost model:
 
 ---
 
-## 7. Delivered Artefacts
+## 7. Delivered Artifacts
 
-| Artefact | Location | Status |
+| Artifact | Location | Status |
 |----------|----------|--------|
 | Training script | `colab_code/MLBFD_Phase4/train_phase11.py` | ✅ |
 | Jupyter notebook | `colab_code/notebooks/Phase_11_Ensemble_Training.ipynb` | ✅ |
@@ -263,7 +263,7 @@ MODEL_FILES = {
 ```
 
 Verified with `test_predictor_integration.py` (25 tests, all passing):
-- Model artefact loading
+- Model artifact loading
 - Feature vector construction
 - Ensemble probability range (0–1)
 - High-risk transaction detection
