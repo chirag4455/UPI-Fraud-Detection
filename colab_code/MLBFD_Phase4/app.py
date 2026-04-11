@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import pickle
 import numpy as np
@@ -8,8 +9,33 @@ from flask import Flask, render_template, request, redirect, url_for, send_file,
 import warnings
 warnings.filterwarnings("ignore")
 
+# Ensure the Phase-4 directory is on sys.path so that Phase-5 modules
+# (config, db, predictor, api, …) can be imported regardless of the
+# working directory (works in Colab, local, and production).
+_phase4_dir = os.path.dirname(os.path.abspath(__file__))
+if _phase4_dir not in sys.path:
+    sys.path.insert(0, _phase4_dir)
+
+# ---------------------------------------------------------------------------
+# Phase 5-9 modular backend — initialise DB and register API Blueprint
+# ---------------------------------------------------------------------------
+try:
+    import db as _db
+    _db.init_db()
+except Exception as _e:
+    import logging as _log
+    _log.getLogger("mlbfd.app").warning("DB init skipped: %s", _e)
+
 app = Flask(__name__)
-app.secret_key = "mlbfd-secret-key-2026"
+app.secret_key = os.environ.get("MLBFD_SECRET_KEY", "mlbfd-secret-key-2026")
+
+# Register the REST API blueprint (all routes under /api/*)
+try:
+    from api import api_bp
+    app.register_blueprint(api_bp)
+except Exception as _e:
+    import logging as _log
+    _log.getLogger("mlbfd.app").warning("API blueprint not registered: %s", _e)
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
@@ -66,6 +92,15 @@ alerts_store = []
 feedback_store = []
 predictions_store = []
 settings_store = {"language": "english", "critical_threshold": 80, "warning_threshold": 50}
+
+
+def _get_prediction_count() -> int:
+    """Return total predictions across in-memory store and SQLite (if available)."""
+    try:
+        stats = _db.db_health()
+        return int(stats.get("predictions", 0)) + len(predictions_store)
+    except Exception:
+        return len(predictions_store)
 
 
 def create_feature_vector(form_data):
@@ -206,15 +241,21 @@ def predict_fraud(feature_df):
         "total_votes": total_votes,
         "explanation": explanation,
         "shap_reasons": shap_reasons[:6],
-        "txn_id": "TXN{:06d}".format(len(predictions_store)+1)
+        "txn_id": "TXN{:06d}".format(_get_prediction_count() + 1)
     }
 
 
 @app.route("/")
 def dashboard():
+    # Prefer SQLite counts when available, fall back to in-memory store
+    try:
+        db_h = _db.db_health()
+        total_preds = db_h.get("predictions", len(predictions_store))
+    except Exception:
+        total_preds = len(predictions_store)
     stats = {
         "models_loaded": len(models),
-        "total_predictions": len(predictions_store),
+        "total_predictions": total_preds,
         "frauds_detected": sum(1 for p in predictions_store if p.get("prediction") == 1),
         "accuracy": 97.3
     }
@@ -268,8 +309,17 @@ def predict():
 
 @app.route("/feedback", methods=["POST"])
 def feedback():
-    fb = {"txn_id": request.form.get("txn_id"), "prediction": request.form.get("prediction"), "feedback": request.form.get("feedback"), "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+    txn_id = request.form.get("txn_id", "")
+    prediction = request.form.get("prediction", "")
+    fb_label = request.form.get("feedback", "")
+    fb = {"txn_id": txn_id, "prediction": prediction, "feedback": fb_label, "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
     feedback_store.append(fb)
+    # Persist to SQLite when available
+    try:
+        actual = "FRAUD" if fb_label.lower() == "incorrect" else "SAFE"
+        _db.save_feedback(txn_id, prediction, actual, "")
+    except Exception:
+        pass
     return redirect(url_for("drift_page"))
 
 

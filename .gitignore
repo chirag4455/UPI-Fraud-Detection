@@ -18,3 +18,7 @@ __pycache__/
 data/
 *.csv
 *.parquet
+
+# SQLite database (generated at runtime)
+*.sqlite3
+*.db
