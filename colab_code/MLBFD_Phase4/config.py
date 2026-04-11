@@ -95,4 +95,48 @@ SUSPICIOUS_KEYWORDS: list = [
     "account", "bank", "payment", "support", "help", "service",
 ]
 
+# ---------------------------------------------------------------------------
+# Phase 10: Advanced WTS enhancement thresholds
+# ---------------------------------------------------------------------------
+
+# --- Geo-Fencing ---
+WTS_GEOFENCE_RADIUS_KM: float = float(
+    os.environ.get("MLBFD_WTS_GEOFENCE_RADIUS_KM", 200.0)
+)
+
+# --- Velocity Analysis ---
+WTS_MAX_SPEED_KMH: float = float(
+    os.environ.get("MLBFD_WTS_MAX_SPEED_KMH", 900.0)
+)
+WTS_VELOCITY_WINDOW_MINUTES: int = int(
+    os.environ.get("MLBFD_WTS_VELOCITY_WINDOW_MINUTES", 5)
+)
+WTS_VELOCITY_COUNT_THRESHOLD: int = int(
+    os.environ.get("MLBFD_WTS_VELOCITY_COUNT_THRESHOLD", 5)
+)
+
+# --- Device Fingerprinting ---
+WTS_DEVICE_KNOWN_THRESHOLD: int = int(
+    os.environ.get("MLBFD_WTS_DEVICE_KNOWN_THRESHOLD", 10)
+)
+WTS_DEVICE_KNOWN_BONUS: float = float(
+    os.environ.get("MLBFD_WTS_DEVICE_KNOWN_BONUS", 15.0)
+)
+WTS_DEVICE_COMPROMISE_WINDOW_HOURS: float = float(
+    os.environ.get("MLBFD_WTS_DEVICE_COMPROMISE_WINDOW_HOURS", 1.0)
+)
+
+# --- Payee Network ---
+WTS_FIRST_TIME_PAYEE_PENALTY: float = float(
+    os.environ.get("MLBFD_WTS_FIRST_TIME_PAYEE_PENALTY", 15.0)
+)
+WTS_SUSPICIOUS_SENDER_THRESHOLD: int = int(
+    os.environ.get("MLBFD_WTS_SUSPICIOUS_SENDER_THRESHOLD", 100)
+)
+
+# --- Amount Velocity ---
+WTS_DAILY_SPEND_THRESHOLD: float = float(
+    os.environ.get("MLBFD_WTS_DAILY_SPEND_THRESHOLD", 100000.0)
+)
+
 logger.debug("Config loaded. DB_PATH=%s  THRESHOLD_CRITICAL=%d", DB_PATH, THRESHOLD_CRITICAL)

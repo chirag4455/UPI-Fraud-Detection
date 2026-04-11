@@ -377,6 +377,11 @@ def predict(txn: dict) -> dict:
             payee_upi=txn.get("payee_upi"),
             amount=float(txn.get("amount", 0)),
             user_transactions=history,
+            # Phase 10 enhancements
+            timestamp=txn.get("timestamp"),
+            home_lat=txn.get("home_lat"),
+            home_lon=txn.get("home_lon"),
+            all_recent_payee_counts=txn.get("all_recent_payee_counts"),
         )
     except Exception as exc:
         logger.warning("WTS error: %s", exc)
