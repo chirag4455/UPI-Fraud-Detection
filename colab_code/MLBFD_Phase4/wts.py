@@ -14,6 +14,8 @@ Score components
 3. Known-payee bonus      — large payee network suggests legitimate activity
 4. Velocity penalty       — many transactions in a short window raises risk
 5. High-amount + new-device combined risk
+6. Phase 10 enhancements  — geo-fencing, velocity analysis, device fingerprinting,
+                            payee network analysis, amount velocity
 
 Returns: float 0–100 (higher = more trustworthy)
 """
@@ -25,6 +27,38 @@ import math
 from typing import Optional
 
 logger = logging.getLogger("mlbfd.wts")
+
+# Phase 10 enhancement imports (gracefully degraded if unavailable)
+try:
+    from wts_enhancements import compute_enhanced_wts_adjustments as _enhanced_adjustments
+    _ENHANCEMENTS_AVAILABLE = True
+except ImportError:
+    _ENHANCEMENTS_AVAILABLE = False
+    logger.warning("wts_enhancements not found; Phase 10 features disabled")
+
+# Config-driven Phase 10 thresholds (fall back to hard-coded defaults)
+try:
+    from config import (
+        WTS_GEOFENCE_RADIUS_KM,
+        WTS_MAX_SPEED_KMH,
+        WTS_VELOCITY_WINDOW_MINUTES,
+        WTS_VELOCITY_COUNT_THRESHOLD,
+        WTS_DEVICE_KNOWN_THRESHOLD,
+        WTS_DEVICE_KNOWN_BONUS,
+        WTS_DEVICE_COMPROMISE_WINDOW_HOURS,
+        WTS_FIRST_TIME_PAYEE_PENALTY,
+        WTS_DAILY_SPEND_THRESHOLD,
+    )
+except ImportError:
+    WTS_GEOFENCE_RADIUS_KM = 200.0
+    WTS_MAX_SPEED_KMH = 900.0
+    WTS_VELOCITY_WINDOW_MINUTES = 5
+    WTS_VELOCITY_COUNT_THRESHOLD = 5
+    WTS_DEVICE_KNOWN_THRESHOLD = 10
+    WTS_DEVICE_KNOWN_BONUS = 15.0
+    WTS_DEVICE_COMPROMISE_WINDOW_HOURS = 1.0
+    WTS_FIRST_TIME_PAYEE_PENALTY = 15.0
+    WTS_DAILY_SPEND_THRESHOLD = 100000.0
 
 # ---------------------------------------------------------------------------
 # Tuneable constants
@@ -63,6 +97,11 @@ def compute_wts(
     payee_upi: Optional[str],
     amount: float,
     user_transactions: Optional[list[dict]] = None,
+    # Phase 10 optional parameters
+    timestamp: object = None,
+    home_lat: Optional[float] = None,
+    home_lon: Optional[float] = None,
+    all_recent_payee_counts: Optional[dict] = None,
 ) -> dict:
     """Compute the Wallet Trust Score for one transaction.
 
@@ -82,6 +121,12 @@ def compute_wts(
         Transaction amount in INR.
     user_transactions:
         Recent transaction dicts from SQLite.
+    timestamp:
+        (Phase 10) Current transaction timestamp for velocity/geo checks.
+    home_lat, home_lon:
+        (Phase 10) Registered home-region coordinates for geo-fence whitelist.
+    all_recent_payee_counts:
+        (Phase 10) Dict mapping payee_upi → distinct sender count in last hour.
 
     Returns
     -------
@@ -150,6 +195,43 @@ def compute_wts(
     # ── Clamp ─────────────────────────────────────────────────────────────
     score = max(0.0, min(100.0, score))
 
+    # ── Phase 10 Enhancements ─────────────────────────────────────────────
+    enhancement_flags: list[str] = []
+    enhancement_detail: str = ""
+    if _ENHANCEMENTS_AVAILABLE:
+        try:
+            enh = _enhanced_adjustments(
+                device_id=device_id,
+                latitude=latitude,
+                longitude=longitude,
+                payee_upi=payee_upi,
+                amount=amount,
+                timestamp=timestamp,
+                user_transactions=user_transactions,
+                all_recent_payee_counts=all_recent_payee_counts,
+                home_lat=home_lat,
+                home_lon=home_lon,
+                geofence_radius_km=WTS_GEOFENCE_RADIUS_KM,
+                max_speed_kmh=WTS_MAX_SPEED_KMH,
+                velocity_window_minutes=WTS_VELOCITY_WINDOW_MINUTES,
+                velocity_count_threshold=WTS_VELOCITY_COUNT_THRESHOLD,
+                device_known_threshold=WTS_DEVICE_KNOWN_THRESHOLD,
+                device_known_bonus=WTS_DEVICE_KNOWN_BONUS,
+                device_compromise_window_hours=WTS_DEVICE_COMPROMISE_WINDOW_HOURS,
+                first_time_payee_penalty=WTS_FIRST_TIME_PAYEE_PENALTY,
+                daily_spend_threshold=WTS_DAILY_SPEND_THRESHOLD,
+            )
+            score += enh["total_delta"]
+            score = max(0.0, min(100.0, score))
+            components["phase10_enhancement"] = round(enh["total_delta"], 2)
+            components["phase10_components"] = {
+                k: v["score_delta"] for k, v in enh["components"].items()
+            }
+            enhancement_flags = enh.get("flags", [])
+            enhancement_detail = enh.get("explanation", "")
+        except Exception as exc:
+            logger.warning("Phase 10 WTS enhancement error: %s", exc)
+
     # ── Explanation ───────────────────────────────────────────────────────
     remarks = []
     if is_known_device:
@@ -164,6 +246,8 @@ def compute_wts(
         remarks.append("high transaction velocity")
     if combined_penalty > 0:
         remarks.append("large amount on unrecognised device")
+    if enhancement_flags:
+        remarks.append("phase10 flags: {}".format(", ".join(enhancement_flags)))
     explanation = "; ".join(remarks) if remarks else "normal wallet behaviour"
 
     logger.debug("WTS score=%.1f components=%s", score, components)
@@ -171,4 +255,5 @@ def compute_wts(
         "score": round(score, 2),
         "components": components,
         "explanation": explanation,
+        "enhancement_detail": enhancement_detail,
     }
