@@ -80,9 +80,10 @@ def parse_upi_qr(payload: Optional[str]) -> dict:
         return result
 
     # ── Normalise scheme ──────────────────────────────────────────────────
-    # Some QRs use UPIID:// or UPI://
+    # Some QRs use UPIID:// or UPI:// (mixed case) — normalise to lowercase upi://
     normalised = re.sub(r"^upiid://", "upi://", payload, flags=re.IGNORECASE)
-    normalised = re.sub(r"^upi://", "upi://", normalised, flags=re.IGNORECASE)
+    if not normalised.lower().startswith("upi://"):
+        normalised = re.sub(r"^upi://", "upi://", normalised, flags=re.IGNORECASE)
 
     # Handle https:// QR codes that encode a UPI deep-link as a redirect URL
     if normalised.lower().startswith("http"):

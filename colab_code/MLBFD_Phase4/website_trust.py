@@ -186,7 +186,7 @@ def score_url(url: Optional[str]) -> dict:
     is_suspicious = score < 50.0
 
     explanation = "; ".join(remarks) if remarks else "URL appears legitimate"
-    logger.debug("WebsiteTrust url=%s score=%.1f", url[:60], score)
+    logger.debug("WebsiteTrust score=%.1f suspicious=%s", score, is_suspicious)
     return {
         "score": round(score, 2),
         "components": components,
@@ -199,7 +199,7 @@ def score_payee_name(payee_name: Optional[str]) -> dict:
     """Check a payee display name for impersonation signals.
 
     Payee names sometimes contain embedded URLs or obvious brand fakes
-    (e.g. "SB1 Bank Support").  This is a lightweight wrapper around
+    (e.g. "SBI Bank Support").  This is a lightweight wrapper around
     :func:`score_url` that also runs a direct brand-name check.
     """
     if not payee_name:

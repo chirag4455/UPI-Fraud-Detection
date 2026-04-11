@@ -160,7 +160,8 @@ def api_predict():
         result = pred_module.predict(txn)
     except Exception as exc:
         logger.exception("Prediction error for txn_id=%s", txn_id)
-        return _err("Prediction failed: {}".format(exc), "prediction_error", 500)
+        return _err("An error occurred during prediction. Please try again.",
+                    "prediction_error", 500)
 
     # Strip internal UI fields; return API-friendly subset
     response = {

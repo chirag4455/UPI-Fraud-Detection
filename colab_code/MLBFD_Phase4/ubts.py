@@ -140,7 +140,7 @@ def compute_ubts(
         remarks.append("first transaction to this payee")
     explanation = "; ".join(remarks) if remarks else "within normal behaviour"
 
-    logger.debug("UBTS user=%s score=%.1f components=%s", user_id, score, components)
+    logger.debug("UBTS score=%.1f components=%s", score, components)
     return {
         "score": round(score, 2),
         "components": components,

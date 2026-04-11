@@ -166,7 +166,7 @@ def compute_wts(
         remarks.append("large amount on unrecognised device")
     explanation = "; ".join(remarks) if remarks else "normal wallet behaviour"
 
-    logger.debug("WTS user=%s score=%.1f components=%s", user_id, score, components)
+    logger.debug("WTS score=%.1f components=%s", score, components)
     return {
         "score": round(score, 2),
         "components": components,
