@@ -48,13 +48,12 @@ def train_all_models(data: dict, config: TrainingConfig) -> dict:
     try:
         import xgboost as xgb
 
-        xgb_model = xgb.XGBClassifier(
-            **config.model_params["xgboost"],
-            random_state=config.random_state,
-            eval_metric="logloss",
-            tree_method="hist",
-            n_jobs=-1,
-        )
+        xgb_params = dict(config.model_params["xgboost"])
+        xgb_params.setdefault("random_state", config.random_state)
+        xgb_params.setdefault("eval_metric", "logloss")
+        xgb_params.setdefault("tree_method", "hist")
+        xgb_params.setdefault("n_jobs", -1)
+        xgb_model = xgb.XGBClassifier(**xgb_params)
         xgb_model.fit(X_train, y_train)
         y_prob = xgb_model.predict_proba(X_test)[:, 1]
         trained_models["XGBoost"] = xgb_model
@@ -156,7 +155,7 @@ def train_all_models(data: dict, config: TrainingConfig) -> dict:
                 y_seq_train,
                 validation_split=0.1,
                 epochs=config.epochs,
-                batch_size=max(64, config.batch_size // 2),
+                batch_size=max(config.lstm_min_batch_size, config.batch_size // 2),
                 verbose=0,
             )
             y_prob = lstm.predict(X_seq_test, verbose=0).flatten()
@@ -185,8 +184,8 @@ def train_all_models(data: dict, config: TrainingConfig) -> dict:
 
     # Lightweight UBTS artifact for compatibility and traceability.
     ubts_payload = {
-        "threshold_warning": 50,
-        "threshold_critical": 80,
+        "threshold_warning": config.threshold_warning,
+        "threshold_critical": config.threshold_critical,
         "created_from": "train_all_models.py",
     }
     with open(out / "mlbfd_mega_ubts.pkl", "wb") as f:
@@ -206,4 +205,3 @@ def train_all_models(data: dict, config: TrainingConfig) -> dict:
         "training_times": training_times,
         "auc_snapshot": auc_snapshot,
     }
-

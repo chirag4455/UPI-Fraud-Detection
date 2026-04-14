@@ -9,6 +9,17 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
+DEFAULT_WINDOWS_MODEL_DIR = r"D:\Major Project\MLBFD_Phase4\backend\models"
+DEFAULT_WINDOWS_LOG_DIR = r"D:\Major Project\MLBFD_Phase4\backend\training_logs"
+DEFAULT_WINDOWS_REPORT_DIR = r"D:\Major Project\MLBFD_Phase4\backend\training_reports"
+DEFAULT_WINDOWS_DATASET_ROOTS = [
+    Path(r"D:\Major Project\Datasets\Tier1"),
+    Path(r"D:\Major Project\Datasets\Tier2"),
+    Path(r"D:\Major Project\MLBFD_Phase1\Data"),
+    Path(r"D:\Major Project\MLBFD_Phase2\Data"),
+]
+
+
 def _dataset_roots_from_env() -> list[Path] | None:
     raw = os.environ.get("MLBFD_DATASET_ROOTS")
     if not raw:
@@ -85,7 +96,7 @@ class TrainingConfig:
         default_factory=lambda: Path(
             os.environ.get(
                 "MLBFD_MODEL_OUTPUT_DIR",
-                r"D:\Major Project\MLBFD_Phase4\backend\models",
+                DEFAULT_WINDOWS_MODEL_DIR,
             )
         )
     )
@@ -93,7 +104,7 @@ class TrainingConfig:
         default_factory=lambda: Path(
             os.environ.get(
                 "MLBFD_LOG_OUTPUT_DIR",
-                r"D:\Major Project\MLBFD_Phase4\backend\training_logs",
+                DEFAULT_WINDOWS_LOG_DIR,
             )
         )
     )
@@ -101,7 +112,7 @@ class TrainingConfig:
         default_factory=lambda: Path(
             os.environ.get(
                 "MLBFD_REPORT_OUTPUT_DIR",
-                r"D:\Major Project\MLBFD_Phase4\backend\training_reports",
+                DEFAULT_WINDOWS_REPORT_DIR,
             )
         )
     )
@@ -117,8 +128,13 @@ class TrainingConfig:
     test_size: float = float(os.environ.get("MLBFD_TEST_SIZE", 0.2))
     random_state: int = int(os.environ.get("MLBFD_RANDOM_STATE", 42))
     batch_size: int = int(os.environ.get("MLBFD_BATCH_SIZE", 1024))
+    lstm_min_batch_size: int = int(os.environ.get("MLBFD_LSTM_MIN_BATCH_SIZE", 64))
     epochs: int = int(os.environ.get("MLBFD_EPOCHS", 10))
     lstm_seq_len: int = int(os.environ.get("MLBFD_LSTM_SEQ_LEN", 10))
+    amount_scale_base: float = float(os.environ.get("MLBFD_AMOUNT_SCALE_BASE", 100000.0))
+    amount_scale_cap: float = float(os.environ.get("MLBFD_AMOUNT_SCALE_CAP", 10.0))
+    threshold_warning: int = int(os.environ.get("MLBFD_THRESHOLD_WARNING", 50))
+    threshold_critical: int = int(os.environ.get("MLBFD_THRESHOLD_CRITICAL", 80))
     max_rows_per_file: int | None = (
         int(os.environ["MLBFD_MAX_ROWS_PER_FILE"])
         if os.environ.get("MLBFD_MAX_ROWS_PER_FILE")
@@ -144,12 +160,7 @@ class TrainingConfig:
             if env_roots:
                 self.dataset_roots = env_roots
             else:
-                self.dataset_roots = [
-                    Path(r"D:\Major Project\Datasets\Tier1"),
-                    Path(r"D:\Major Project\Datasets\Tier2"),
-                    Path(r"D:\Major Project\MLBFD_Phase1\Data"),
-                    Path(r"D:\Major Project\MLBFD_Phase2\Data"),
-                ]
+                self.dataset_roots = DEFAULT_WINDOWS_DATASET_ROOTS.copy()
 
     def ensure_output_dirs(self) -> None:
         for p in (self.model_output_dir, self.log_output_dir, self.report_output_dir):

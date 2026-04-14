@@ -70,7 +70,13 @@ class DataProcessor:
         bal_dest_before = _safe_num(df.get("balance_dest_before", df.get("oldbalanceDest", 0.0)), df.index)
         bal_dest_after = _safe_num(df.get("balance_dest_after", df.get("newbalanceDest", 0.0)), df.index)
 
-        txn_type = df.get("txn_type", df.get("type", "TRANSFER")).astype(str).str.upper()
+        if "txn_type" in df.columns:
+            txn_type = df["txn_type"].astype(str).str.upper()
+        elif "type" in df.columns:
+            txn_type = df["type"].astype(str).str.upper()
+        else:
+            logger.warning("No txn_type/type column found; defaulting transaction type to TRANSFER.")
+            txn_type = pd.Series("TRANSFER", index=df.index)
         out["amount"] = amount
         out["hour"] = hour
         out["balance_before"] = bal_before
@@ -125,7 +131,10 @@ class DataProcessor:
             out[dst] = _safe_num(df.get(src, 0.0), df.index)
 
         out["Amount_Log"] = np.log1p(out["amount"].clip(lower=0))
-        out["Amount_Scaled"] = np.minimum(out["amount"] / 100000.0, 10.0)
+        out["Amount_Scaled"] = np.minimum(
+            out["amount"] / self.config.amount_scale_base,
+            self.config.amount_scale_cap,
+        )
         out["is_new_payee"] = _safe_num(df.get("is_new_payee", 0.0), df.index).clip(0, 1)
         out["is_known_device"] = _safe_num(df.get("is_known_device", 1.0), df.index).clip(0, 1)
         out["is_night"] = ((out["hour"] >= 23) | (out["hour"] <= 5)).astype(float)
