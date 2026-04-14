@@ -26,7 +26,9 @@ DEFAULT_NUMERIC = {
     "is_usual_location": 1.0,
     "has_email": 1.0,
 }
-
+# 3.0 is intentionally more permissive than Tukey's 1.5 rule because transaction
+# amounts in fraud datasets are heavy-tailed; this reduces clipping of valid spikes.
+IQR_CLIP_MULTIPLIER = 3
 
 @dataclass
 class ProcessedData:
@@ -91,7 +93,7 @@ def _find_target(df):
     return None
 
 
-def _engineer(df):
+def _engineer(df, config: TrainingConfig):
     pd, np = _import_pd_np()
     txn = pd.Series(df.get("txn_type", "TRANSFER")).astype(str).str.upper()
     df["is_transfer"] = (txn == "TRANSFER").astype(float)
@@ -111,7 +113,7 @@ def _engineer(df):
     df["balance_before"] = bal_before
     df["balance_after"] = bal_after
     df["balance_change"] = bal_before - bal_after
-    df["balance_change_ratio"] = df["balance_change"] / bal_before.clip(lower=1)
+    df["balance_change_ratio"] = np.where(bal_before > 0, df["balance_change"] / bal_before, 0.0)
     df["balance_dest_before"] = pd.to_numeric(df.get("balance_dest_before", 0), errors="coerce").fillna(0)
     df["balance_dest_after"] = pd.to_numeric(df.get("balance_dest_after", amount), errors="coerce").fillna(amount)
     df["dest_balance_change"] = df["balance_dest_after"] - df["balance_dest_before"]
@@ -139,13 +141,14 @@ def _engineer(df):
     df["new_payee_night"] = ((df["is_new_payee"] == 1) & (df["is_night"] == 1)).astype(float)
     df["high_amount_new_device"] = ((amount > 20000) & (df["is_known_device"] == 0)).astype(float)
     df["young_vpa_high_amount"] = ((df["vpa_age_days"] < 30) & (amount > 10000)).astype(float)
+    w = config.heuristic_score_weights
     df["heuristic_risk_score"] = (
-        (amount > 50000).astype(float) * 2
-        + (amount > 20000).astype(float)
-        + df["is_night"] * 2
-        + df["is_new_payee"]
-        + (1 - df["is_known_device"]) * 2
-        + (df["is_transfer"] + df["is_cash_out"]) * 0.5
+        (amount > 50000).astype(float) * w["amt_gt_50000"]
+        + (amount > 20000).astype(float) * w["amt_gt_20000"]
+        + df["is_night"] * w["night_multiplier"]
+        + df["is_new_payee"] * w["new_payee"]
+        + (1 - df["is_known_device"]) * w["unknown_device_multiplier"]
+        + (df["is_transfer"] + df["is_cash_out"]) * w["transfer_or_cash_out"]
     )
     for col in REQUIRED_API_FEATURES:
         base_default = DEFAULT_NUMERIC.get(col, 0.0)
@@ -167,7 +170,11 @@ def _clean(df):
         q1 = df[num_cols].quantile(0.25)
         q3 = df[num_cols].quantile(0.75)
         iqr = q3 - q1
-        df[num_cols] = df[num_cols].clip(lower=q1 - 3 * iqr, upper=q3 + 3 * iqr, axis=1)
+        df[num_cols] = df[num_cols].clip(
+            lower=q1 - IQR_CLIP_MULTIPLIER * iqr,
+            upper=q3 + IQR_CLIP_MULTIPLIER * iqr,
+            axis=1,
+        )
     return df, removed
 
 
@@ -190,13 +197,14 @@ def load_and_preprocess_data(config: TrainingConfig) -> ProcessedData:
         df = _normalize(df)
         target_col = _find_target(df)
         if target_col is None:
-            flagged = pd.to_numeric(df.get("isFlaggedFraud", 0), errors="coerce").fillna(0)
-            fraud = pd.to_numeric(df.get("isFraud", 0), errors="coerce").fillna(0)
+            is_flagged_fraud = pd.to_numeric(df.get("isFlaggedFraud", 0), errors="coerce").fillna(0)
+            is_fraud_explicit = pd.to_numeric(df.get("isFraud", 0), errors="coerce").fillna(0)
             amount = pd.to_numeric(df.get("amount", 0), errors="coerce").fillna(0)
-            df["is_fraud"] = ((flagged > 0) | (fraud > 0) | (amount > 200000)).astype(int)
+            fraud_threshold = config.fraud_heuristic_amount_threshold
+            df["is_fraud"] = ((is_flagged_fraud > 0) | (is_fraud_explicit > 0) | (amount > fraud_threshold)).astype(int)
         elif target_col != "is_fraud":
             df.rename(columns={target_col: "is_fraud"}, inplace=True)
-        df = _engineer(df)
+        df = _engineer(df, config=config)
         df, removed = _clean(df)
         df = df[REQUIRED_API_FEATURES + ["is_fraud"]]
         frames.append(df)

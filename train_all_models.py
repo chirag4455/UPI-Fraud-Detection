@@ -65,6 +65,8 @@ def main() -> int:
 
         logger.info("[4/5] Writing registry + metadata")
         model_dir = Path(config.output_models_dir)
+        nn_ext = metrics.get("Neural Network", {}).get("save_extension", ".keras")
+        lstm_ext = metrics.get("LSTM", {}).get("save_extension", ".keras")
         registry = {
             "generated_at": datetime.now().isoformat(),
             "version": config.timestamp,
@@ -74,8 +76,8 @@ def main() -> int:
                 "random_forest": f"{config.model_prefix}random_forest_model.pkl",
                 "logistic_regression": f"{config.model_prefix}logistic_regression_model.pkl",
                 "isolation_forest": f"{config.model_prefix}isolation_forest_model.pkl",
-                "neural_network": "mlbfd_mega_neural_network_model.keras or .pkl fallback",
-                "lstm": "mlbfd_mega_lstm_model.keras or .pkl fallback",
+                "neural_network": f"{config.model_prefix}neural_network_model{nn_ext}",
+                "lstm": f"{config.model_prefix}lstm_model{lstm_ext}",
             },
             "supporting": {
                 "scaler": f"{config.model_prefix}scaler.pkl",

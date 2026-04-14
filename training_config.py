@@ -25,24 +25,44 @@ REQUIRED_API_FEATURES: List[str] = [
     "is_usual_location", "has_email", "card_type", "card_category", "address_code",
     "product_type",
 ]
+NUMERIC_EPSILON: float = 1e-9
+
+
+def _default_dataset_roots() -> List[str]:
+    env_roots = os.environ.get("MLBFD_DATASET_ROOTS", "").strip()
+    if env_roots:
+        return [p.strip() for p in env_roots.split(",") if p.strip()]
+    return [
+        r"D:\Major Project\Datasets",
+        r"D:\Major Project\MLBFD_Phase1\Data",
+        r"D:\Major Project\MLBFD_Phase2\Data",
+        r"D:\Major Project\MLBFD",
+    ]
 
 
 @dataclass
 class TrainingConfig:
-    dataset_roots: List[str] = field(
-        default_factory=lambda: [
-            r"D:\Major Project\Datasets",
-            r"D:\Major Project\MLBFD_Phase1\Data",
-            r"D:\Major Project\MLBFD_Phase2\Data",
-            r"D:\Major Project\MLBFD",
-        ]
-    )
+    dataset_roots: List[str] = field(default_factory=_default_dataset_roots)
     output_models_dir: str = "colab_code/MLBFD_Phase4/backend/models"
     output_logs_dir: str = "colab_code/MLBFD_Phase4/backend/training_logs"
     output_reports_dir: str = "colab_code/MLBFD_Phase4/backend/training_reports"
     random_state: int = 42
     test_size: float = 0.2
     max_rows_per_file: int = 300_000
+    # Default heuristic cutoff (amount in INR) for datasets without explicit fraud labels.
+    # Tuned to flag unusually large UPI-like transactions while remaining conservative.
+    fraud_heuristic_amount_threshold: float = 200_000.0
+    cv_n_jobs: int = -1
+    heuristic_score_weights: Dict[str, float] = field(
+        default_factory=lambda: {
+            "amt_gt_50000": 2.0,
+            "amt_gt_20000": 1.0,
+            "night_multiplier": 2.0,
+            "new_payee": 1.0,
+            "unknown_device_multiplier": 2.0,
+            "transfer_or_cash_out": 0.5,
+        }
+    )
     model_hyperparameters: Dict[str, Dict] = field(
         default_factory=lambda: {
             "xgboost": {"n_estimators": 250, "max_depth": 7, "learning_rate": 0.08, "subsample": 0.85, "colsample_bytree": 0.8, "eval_metric": "logloss"},

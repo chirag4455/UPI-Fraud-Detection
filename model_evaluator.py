@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
-from training_config import TrainingConfig
+from training_config import NUMERIC_EPSILON, TrainingConfig
 
 logger = logging.getLogger("mlbfd.model_evaluator")
 
@@ -26,13 +26,30 @@ def evaluate_and_report(config: TrainingConfig, processed_data, models: Dict[str
     report_dir.mkdir(parents=True, exist_ok=True)
 
     X_test, y_test = processed_data.X_test, processed_data.y_test
+    X_test_lstm = X_test
+    lstm_scaler_path = model_dir / f"{config.model_prefix}lstm_scaler.pkl"
+    if lstm_scaler_path.exists():
+        try:
+            with open(lstm_scaler_path, "rb") as fh:
+                lstm_scaler = pickle.load(fh)
+            X_test_lstm = lstm_scaler.transform(X_test)
+        except Exception:
+            X_test_lstm = X_test
     prob_map = {}
     for name, model in models.items():
         try:
             if name == "Isolation Forest":
                 score = -model.score_samples(X_test)
-                prob_map[name] = (score - score.min()) / (score.max() - score.min() + 1e-9)
-            elif name in {"Neural Network", "LSTM"} and hasattr(model, "predict") and not hasattr(model, "predict_proba"):
+                prob_map[name] = (score - score.min()) / (score.max() - score.min() + NUMERIC_EPSILON)
+            elif name == "LSTM":
+                lstm_input = X_test_lstm
+                if hasattr(model, "input_shape") and isinstance(model.input_shape, tuple) and len(model.input_shape) == 3:
+                    lstm_input = np.expand_dims(X_test_lstm, axis=1)
+                if hasattr(model, "predict_proba"):
+                    prob_map[name] = model.predict_proba(lstm_input)[:, 1]
+                else:
+                    prob_map[name] = model.predict(lstm_input, verbose=0).reshape(-1).astype(float)
+            elif name == "Neural Network" and hasattr(model, "predict") and not hasattr(model, "predict_proba"):
                 prob_map[name] = model.predict(X_test, verbose=0).reshape(-1).astype(float)
             elif hasattr(model, "predict_proba"):
                 prob_map[name] = model.predict_proba(X_test)[:, 1]

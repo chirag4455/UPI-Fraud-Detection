@@ -7,7 +7,7 @@ import pickle
 from pathlib import Path
 from typing import Dict, Tuple
 
-from training_config import TrainingConfig
+from training_config import NUMERIC_EPSILON, TrainingConfig
 
 logger = logging.getLogger("mlbfd.model_trainer")
 
@@ -53,7 +53,7 @@ def train_all_models(processed_data, config: TrainingConfig) -> Tuple[Dict[str, 
     models["XGBoost"] = xgb_model
     metrics["XGBoost"] = {**_evaluate_binary(y_test, xgb_pred, xgb_prob), "confusion_matrix": confusion_matrix(y_test, xgb_pred).tolist(), "classification_report": classification_report(y_test, xgb_pred, output_dict=True, zero_division=0)}
     try:
-        metrics["XGBoost"]["cv_f1_mean"] = float(cross_val_score(xgb_model, X_train, y_train, cv=3, scoring="f1", n_jobs=1).mean())
+        metrics["XGBoost"]["cv_f1_mean"] = float(cross_val_score(xgb_model, X_train, y_train, cv=3, scoring="f1", n_jobs=config.cv_n_jobs).mean())
     except Exception:
         pass
 
@@ -64,7 +64,7 @@ def train_all_models(processed_data, config: TrainingConfig) -> Tuple[Dict[str, 
     models["Random Forest"] = rf_model
     metrics["Random Forest"] = {**_evaluate_binary(y_test, rf_pred, rf_prob), "confusion_matrix": confusion_matrix(y_test, rf_pred).tolist(), "classification_report": classification_report(y_test, rf_pred, output_dict=True, zero_division=0)}
     try:
-        metrics["Random Forest"]["cv_f1_mean"] = float(cross_val_score(rf_model, X_train, y_train, cv=3, scoring="f1", n_jobs=1).mean())
+        metrics["Random Forest"]["cv_f1_mean"] = float(cross_val_score(rf_model, X_train, y_train, cv=3, scoring="f1", n_jobs=config.cv_n_jobs).mean())
     except Exception:
         pass
 
@@ -75,7 +75,7 @@ def train_all_models(processed_data, config: TrainingConfig) -> Tuple[Dict[str, 
     models["Logistic Regression"] = lr_model
     metrics["Logistic Regression"] = {**_evaluate_binary(y_test, lr_pred, lr_prob), "confusion_matrix": confusion_matrix(y_test, lr_pred).tolist(), "classification_report": classification_report(y_test, lr_pred, output_dict=True, zero_division=0)}
     try:
-        metrics["Logistic Regression"]["cv_f1_mean"] = float(cross_val_score(lr_model, X_train, y_train, cv=3, scoring="f1", n_jobs=1).mean())
+        metrics["Logistic Regression"]["cv_f1_mean"] = float(cross_val_score(lr_model, X_train, y_train, cv=3, scoring="f1", n_jobs=config.cv_n_jobs).mean())
     except Exception:
         pass
 
@@ -83,7 +83,7 @@ def train_all_models(processed_data, config: TrainingConfig) -> Tuple[Dict[str, 
     iso_model.fit(X_train)
     iso_pred = (iso_model.predict(X_test) == -1).astype(int)
     iso_score = -iso_model.score_samples(X_test)
-    iso_prob = (iso_score - iso_score.min()) / (iso_score.max() - iso_score.min() + 1e-9)
+    iso_prob = (iso_score - iso_score.min()) / (iso_score.max() - iso_score.min() + NUMERIC_EPSILON)
     models["Isolation Forest"] = iso_model
     metrics["Isolation Forest"] = {**_evaluate_binary(y_test, iso_pred, iso_prob), "confusion_matrix": confusion_matrix(y_test, iso_pred).tolist(), "classification_report": classification_report(y_test, iso_pred, output_dict=True, zero_division=0)}
 
