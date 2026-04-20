@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import logging
 import pickle
 import numpy as np
 import pandas as pd
@@ -8,6 +9,8 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 import warnings
 warnings.filterwarnings("ignore")
+
+_logger = logging.getLogger("mlbfd.app")
 
 # Ensure the Phase-4 directory is on sys.path so that Phase-5 modules
 # (config, db, predictor, api, …) can be imported regardless of the
@@ -66,10 +69,19 @@ try:
 except:
     pass
 
-with open(os.path.join(MODEL_DIR, "mlbfd_mega_scaler.pkl"), "rb") as f:
-    scaler = pickle.load(f)
-with open(os.path.join(MODEL_DIR, "mlbfd_mega_feature_names.pkl"), "rb") as f:
-    feature_names = pickle.load(f)
+scaler = None
+feature_names = []
+try:
+    scaler_path = os.path.join(MODEL_DIR, "mlbfd_mega_scaler.pkl")
+    if os.path.exists(scaler_path):
+        with open(scaler_path, "rb") as f:
+            scaler = pickle.load(f)
+    fn_path = os.path.join(MODEL_DIR, "mlbfd_mega_feature_names.pkl")
+    if os.path.exists(fn_path):
+        with open(fn_path, "rb") as f:
+            feature_names = pickle.load(f)
+except Exception as _e:
+    _logger.warning("Scaler/feature_names not loaded: %s", _e)
 
 npci_data = None
 bank_data = None
@@ -150,14 +162,17 @@ def create_feature_vector(form_data):
     if not is_known_device: risk += 2
     if txn_type in ["TRANSFER", "CASH_OUT"]: risk += 1
     features["heuristic_risk_score"] = risk
-    df = pd.DataFrame([features])[feature_names]
+    cols = feature_names if feature_names else list(features.keys())
+    df = pd.DataFrame([features])[cols]
     return df
 
 
 def predict_fraud(feature_df):
     results = {}
     probabilities = []
-    feature_scaled = scaler.transform(feature_df)
+    # Use fitted scaler when available; fall back to raw values so the server
+    # can start and serve the UI even when model artifacts are not yet present.
+    feature_scaled = scaler.transform(feature_df) if scaler is not None else feature_df.values
     for name, model in models.items():
         try:
             if name == "Isolation Forest":
@@ -436,5 +451,5 @@ def update_settings():
 if __name__ == "__main__":
     print("MLBFD - ML Based Fraud Detection")
     print("Models Loaded:", len(models))
-    print("Features:", len(feature_names))
+    print("Features:", len(feature_names) if feature_names else 0)
     app.run(debug=True, port=5000)
