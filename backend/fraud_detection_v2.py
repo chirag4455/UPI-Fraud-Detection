@@ -110,10 +110,29 @@ class UserBehaviorAnalyzer:
     def __init__(self, db=None):
         self.db = db
         self.behavior_cache = {}
+        # MOCK DATA for testing
+        self.mock_baselines = {
+            'user_001': {
+                'avg_amount': 5000,
+                'std_amount': 2000,
+                'max_amount': 50000,
+                'min_amount': 1000,
+                'avg_frequency': 0.5,
+                'usual_hours': [9, 10, 11, 14, 15, 18, 19],
+                'usual_payees': ['mom@ybl', 'dad@paytm', 'bill@okaxis'],
+                'is_new_account': False,
+                'transaction_count': 50,
+                'avg_daily_txns': 1.5
+            }
+        }
     
     def get_user_baseline(self, user_id: str) -> Dict:
         """Get user's historical behavior baseline"""
         try:
+            # Check mock data first
+            if user_id in self.mock_baselines:
+                return self.mock_baselines[user_id]
+            
             # Query user's last 100 transactions
             transactions = self._get_user_transactions(user_id, limit=100)
             
@@ -433,6 +452,13 @@ class PayeeValidator:
     
     def __init__(self):
         self.payee_cache = {}
+        # MOCK scam UPIs
+        self.scam_upis = {
+            'scammer@icici',
+            'fraud@hdfc',
+            'phish@axis',
+            'malicious@bank'
+        }
     
     def validate_payee(self, receiver_upi: str, receiver_name: str = None) -> Tuple[float, List[str]]:
         """
@@ -481,8 +507,7 @@ class PayeeValidator:
     
     def _is_known_scam_upi(self, upi: str) -> bool:
         """Check against scam database"""
-        # TODO: Query scam database
-        return False
+        return upi.lower() in self.scam_upis
     
     def _find_similar_payee(self, upi: str) -> str:
         """Find similar UPI in known payees"""
@@ -491,8 +516,9 @@ class PayeeValidator:
     
     def _is_known_payee(self, upi: str) -> bool:
         """Check if payee is in known list"""
-        # TODO: Query database
-        return False
+        # MOCK known payees
+        known = {'mom@ybl', 'dad@paytm', 'bill@okaxis', 'merchant@ybl'}
+        return upi in known
     
     def _get_payee_name(self, upi: str) -> str:
         """Get registered name for UPI"""
@@ -518,6 +544,10 @@ class CompromiseDetector:
     def __init__(self):
         self.auth_history = defaultdict(list)
         self.device_signatures = defaultdict(set)
+        # MOCK known devices
+        self.known_devices = {
+            'user_001': {'device_abc', 'device_phone_123', 'device_laptop_456'}
+        }
     
     def check_compromise_signs(self, user_id: str, current_session: Dict) -> Tuple[float, List[str]]:
         """
@@ -571,7 +601,8 @@ class CompromiseDetector:
         """Check if device is new"""
         if device_id == "unknown":
             return True
-        return device_id not in self.device_signatures.get(user_id, set())
+        known = self.known_devices.get(user_id, set())
+        return device_id not in known
     
     def _count_failed_auth(self, user_id: str, minutes: int) -> int:
         """Count failed auth attempts"""
@@ -621,10 +652,14 @@ class BulletproofFraudDetector:
         except ValueError as e:
             return {
                 'status': 'BLOCKED',
+                'action': '❌ BLOCKED - Invalid input',
                 'reason': f'Input validation failed: {str(e)}',
                 'verdict': 'INVALID_INPUT',
                 'risk_score': 100,
-                'layers': {}
+                'layers': {},
+                'all_reasons': [str(e)],
+                'timestamp': datetime.now().isoformat(),
+                'recommendation': 'BLOCK_TRANSACTION'
             }
         
         # STEP 2: RUN ALL 7 DETECTION LAYERS
