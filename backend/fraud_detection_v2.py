@@ -1,5 +1,5 @@
 """
-BULLETPROOF FRAUD DETECTION ENGINE v2 - CORRECTED WITH PROPER SCORING
+BULLETPROOF FRAUD DETECTION ENGINE v2 - COMPLETE WITH PROPER SCORING
 """
 
 import os
@@ -174,23 +174,23 @@ class UserBehaviorAnalyzer:
             z_score = (txn_amt - avg_amt) / max(std_amt, 1)
             
             if z_score > 3:
-                score += 50  # INCREASED from 40
+                score += 60
                 reasons.append(f"Amount ₹{txn_amt:,.0f} is {z_score:.1f}σ above average (₹{avg_amt:,.0f})")
             elif z_score > 2:
-                score += 35  # INCREASED from 25
+                score += 45
                 reasons.append(f"Amount ₹{txn_amt:,.0f} is {z_score:.1f}σ above average")
             elif z_score > 1:
-                score += 15  # INCREASED from 10
+                score += 25
         
         known_payees = baseline.get('usual_payees', [])
         if known_payees and len(known_payees) > 0:
             if current_txn.get('receiver_upi') not in known_payees:
-                score += 30  # INCREASED from 20
+                score += 40
                 reasons.append(f"New payee (user has {len(known_payees)} known payees)")
         
         usual_hours = baseline.get('usual_hours', list(range(24)))
         if current_txn.get('hour') not in usual_hours:
-            score += 25  # INCREASED from 15
+            score += 30
             reasons.append(f"Unusual hour: {current_txn.get('hour')}:00 (usual: {usual_hours})")
         
         return min(score, 100), reasons
@@ -319,9 +319,9 @@ class PayeeValidator:
             reasons.append("🚨 CRITICAL: Receiver UPI is in scam/fraud database - KNOWN FRAUD")
             return score, reasons
         
-        # New payee risk - INCREASED SCORE
+        # New payee risk - INCREASED
         if not self._is_known_payee(receiver_upi):
-            score += 40  # INCREASED from 20
+            score += 50
             reasons.append("Payee is new/unknown")
         
         return min(score, 100), reasons
@@ -368,7 +368,7 @@ class CompromiseDetector:
         score = 0
         
         if self._is_new_device(user_id, current_session.get('device_id')):
-            score += 30  # INCREASED from 20
+            score += 40
             reasons.append("New device detected")
         
         return min(score, 100), reasons
@@ -443,7 +443,7 @@ class BulletproofFraudDetector:
             transaction_data.get('receiver_name')
         )
         
-        if payee_score >= 95:  # SCAM UPI DETECTED
+        if payee_score >= 95:
             return {
                 'status': 'BLOCKED',
                 'verdict': 'FRAUD_DETECTED',
@@ -463,34 +463,34 @@ class BulletproofFraudDetector:
                 'recommendation': 'BLOCK_TRANSACTION'
             }
         
-        # STEP 3: RUN ALL 7 DETECTION LAYERS with UPDATED WEIGHTS
+        # STEP 3: RUN ALL 7 DETECTION LAYERS
         layers = {}
         total_score = 0
         
-        # Layer 1: Behavioral Analysis - WEIGHT: 0.30 (INCREASED from 0.25)
+        # Layer 1: Behavioral Analysis - WEIGHT: 0.35
         baseline = self.behavior_analyzer.get_user_baseline(user_id)
         behavioral_score, behavioral_reasons = self.behavior_analyzer.detect_behavioral_anomaly(
             user_id, validated_txn, baseline
         )
         layers['behavioral'] = {
             'score': behavioral_score,
-            'weight': 0.30,
+            'weight': 0.35,
             'reasons': behavioral_reasons
         }
-        total_score += behavioral_score * 0.30
+        total_score += behavioral_score * 0.35
         
-        # Layer 2: Velocity Detection - WEIGHT: 0.15 (unchanged)
+        # Layer 2: Velocity Detection - WEIGHT: 0.10
         velocity_score, velocity_reasons = self.velocity_engine.check_velocity(
             user_id, validated_txn['amount']
         )
         layers['velocity'] = {
             'score': velocity_score,
-            'weight': 0.15,
+            'weight': 0.10,
             'reasons': velocity_reasons
         }
-        total_score += velocity_score * 0.15
+        total_score += velocity_score * 0.10
         
-        # Layer 3: Transaction Flow - WEIGHT: 0.10 (unchanged)
+        # Layer 3: Transaction Flow - WEIGHT: 0.08
         flow_score, flow_reasons = self.flow_analyzer.analyze_flow(
             validated_txn['sender_upi'],
             validated_txn['receiver_upi'],
@@ -498,31 +498,31 @@ class BulletproofFraudDetector:
         )
         layers['flow'] = {
             'score': flow_score,
-            'weight': 0.10,
+            'weight': 0.08,
             'reasons': flow_reasons
         }
-        total_score += flow_score * 0.10
+        total_score += flow_score * 0.08
         
-        # Layer 4: Payee Validation - WEIGHT: 0.25 (INCREASED from 0.15)
+        # Layer 4: Payee Validation - WEIGHT: 0.30
         layers['payee'] = {
             'score': payee_score,
-            'weight': 0.25,
+            'weight': 0.30,
             'reasons': payee_reasons
         }
-        total_score += payee_score * 0.25
+        total_score += payee_score * 0.30
         
-        # Layer 5: Compromise Detection - WEIGHT: 0.15 (INCREASED from 0.15)
+        # Layer 5: Compromise Detection - WEIGHT: 0.12
         compromise_score, compromise_reasons = self.compromise_detector.check_compromise_signs(
             user_id, validated_txn
         )
         layers['compromise'] = {
             'score': compromise_score,
-            'weight': 0.15,
+            'weight': 0.12,
             'reasons': compromise_reasons
         }
-        total_score += compromise_score * 0.15
+        total_score += compromise_score * 0.12
         
-        # Layer 6: Amount Bounds Check - WEIGHT: 0.03 (unchanged)
+        # Layer 6: Amount Bounds Check - WEIGHT: 0.03
         amount_score = self._basic_amount_check(validated_txn['amount'])
         layers['amount'] = {
             'score': amount_score,
@@ -531,7 +531,7 @@ class BulletproofFraudDetector:
         }
         total_score += amount_score * 0.03
         
-        # Layer 7: Website Trust - WEIGHT: 0.02 (unchanged)
+        # Layer 7: Website Trust - WEIGHT: 0.02
         website_score = 0
         website_reasons = []
         if validated_txn['website_url']:
