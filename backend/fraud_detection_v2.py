@@ -1,6 +1,4 @@
-"""
-BULLETPROOF FRAUD DETECTION ENGINE v2 - FIXED SCORING
-"""
+"""BULLETPROOF FRAUD DETECTION ENGINE v2 - FIXED SCORING"""
 
 import os
 import json
@@ -359,6 +357,15 @@ class BulletproofFraudDetector:
             validated_txn['receiver_upi'],
             transaction_data.get('receiver_name')
         )
+
+        # Adjust payee_score based on payee_status input
+        payee_status = transaction_data.get('payee_status', 'unknown')
+        if payee_status == 'known':
+            payee_score *= 0.5  # Reduce risk by 50% if known payee
+            payee_reasons.append("✓ User marked payee as KNOWN - risk reduced")
+        else:
+            payee_score *= 1.2  # Increase risk by 20% if unknown payee
+            payee_reasons.append("⚠ User marked payee as UNKNOWN - risk elevated")
 
         if payee_score >= 95:
             return {
